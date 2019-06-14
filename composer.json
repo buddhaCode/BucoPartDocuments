@@ -1,0 +1,15 @@
+{
+  "name": "buddha-code/buco-part-documents",
+  "homepage": "https://github.com/buddhaCode/BucoPartDocuments",
+  "description": "Shopware plugin to create order documents for just a subset of positions of an order",
+  "keywords": ["shopware", "plugin", "document", "part document", "order document"],
+  "type": "shopware-plugin",
+  "extra": {
+    "installer-name": "BucoPartDocuments"
+  },
+  "license": "GPL-3.0",
+  "require": {
+    "php": ">=7.0",
+    "composer/installers": "^1.0"
+  }
+}

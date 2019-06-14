@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<plugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../engine/Shopware/Components/Plugin/schema/plugin.xsd">
+    <label>Orders: Part documents</label>
+    <label lang="de">Bestellungen: Teildokumente</label>
+    <version>1.0.0</version>
+    <license>MIT</license>
+    <link>https://github.com/buddhaCode/BucoPartDocuments</link>
+    <author>buddhaCode</author>
+    <description>
+        <![CDATA[
+<p>This plugin adds the ability to create an order document with just a subset
+of the order's positions. Therefore, the order's document tab has a new checkbox
+to enable the selection. Once selected, a new position grid becomes available to select the
+desired positions. With no positions selected, an emtpy document will be created. This might
+be useful, to place messages via the document's comment field.</p>
+
+<p><img src="/custom/plugins/BucoPartDocuments/Resources/screenshots/screen1creation.png" height="711" alt="Order's document tab"></p>
+
+<p>To indicate whether the document is a part document or a regular ("full") document, a moon and
+half moon icon will be introduced in several places like the document tab, the document quick
+overview and the mail window.</p>
+
+<p><img src="/custom/plugins/BucoPartDocuments/Resources/screenshots/screen2mailAttachment.png" height="779" alt="Mail attachment"></p>
+
+<p><img src="/custom/plugins/BucoPartDocuments/Resources/screenshots/screen3orderList.png" height="825" alt="Order liist document quick view"></p>
+
+<p>Sending a document via e-mail will extend the mail context with a <code>$EventResult.bucoIsPartDocument</code>
+boolean variable, indicating the state of the attached document. So it's possible to render different
+outputs depending on the state of the document. E.g.:</p>
+
+<p><code><pre>{if $EventResult.bucoIsPartDocument}
+    The attached document contains a subset of positions.
+{else}
+    The attached document contains a all positions.
+{/if}</pre></code></p>
+
+<p>This variable is set, if the mail has ONE attachment only. With multiple attachments, the variable
+would lose it's meaning.</p>
+
+<h2>Configuration</h2>
+
+<p>It's possible to restrict the creation of part documents to specific document types or templates.</p>
+
+<p><img src="/custom/plugins/BucoPartDocuments/Resources/screenshots/screen0config.png" height="245" alt="Order's document tab"></p>
+
+<h2>Migration</h2>
+<p>If you were using the <a href="https://store.shopware.com/mbdus41476730029/teildokumente-erstellen.html" target="_blank">mbdus Teildokumente erstellen</a> plugin before,
+there is a migration assistant for you. This will migrate the mbdus part documents into this plugin.
+Please beware, that this plugin has less features than the mbdus plugin. E.g. it's not possible to
+change the recipients postal address. On the other hand, this implementation is much leaner and
+less error-prone.</p>
+
+<p><img src="/custom/plugins/BucoPartDocuments/Resources/screenshots/screen4migrationStart.png" height="231" alt="Migration start"></p>
+
+<p><img src="/custom/plugins/BucoPartDocuments/Resources/screenshots/screen5migrationFinished.png" height="203" alt="Migration finished"></p>
+
+<p>The internal database IDs will be re-enumerated. The original primary key will be preserved in the
+<code>s_order_documents_attributes.buco_part_document_legacy_id</code> column for your service.</p>
+
+<p>The access to the migration assistant is protected with an ACL resource. The <code>local_admin</code> user role
+is enabled by default. Otherwise, you might wish to grant other roles access to the <code>bucopartdocumentsmigration.migrate</code> privilege.</p>
+
+<p>The mbdus plugin doesn't need to be installed anymore. After the uninstallation, the plugin left it's data tables behind.
+This left-behinds are sufficient to do the migration. You'll have possibility to clean up these tables at the end of the migration process.</p>
+
+<h2>Programmatically Usage</h2>
+<p>If you need to create a part document programmatically, please pass the following arguments to the
+<code>initDocument()</code> method. Yes, some of the information are redundant. This is based on technical
+restrictions. Please refer to the source code for further details. A [pull request (shopware/shopware#2121)](https://github.com/shopware/shopware/pull/2121) is pending,
+to address this issues.</p>
+
+<p><code><pre>\Shopware_Components_Document::initDocument($orderId, $docTypeId, [
+    'netto' => false,
+    'shippingCostsAsPosition' => true,
+    '_renderer' => 'pdf',
+    'bucoCreatePartDocument' => true,       // used to create part document
+    'bucoPartDocPosIds' => [1,2],           // used to create part document; not an index, but the s_order_details primary key
+    '_allowMultipleDocuments' => true,      // used to create part document
+    'attributes' => [
+        'bucoIsPartDocument' => true        // used to create part document
+    ],
+    'summaryNet' => [
+        'bucoCreatePartDocument' => true,   // used to create part document
+        'bucoPartDocPosIds' => [1,2]        // used to create part document; not an index, but the s_order_details primary key
+    ]
+]);</pre></code></p>
+        ]]>
+    </description>
+    <compatibility minVersion="5.5.0" />
+    <changelog version="1.0.0">
+        <changes>Erstveröffentlichung</changes>
+    </changelog>
+</plugin>

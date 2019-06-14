@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="../../../../engine/Shopware/Components/Plugin/schema/config.xsd">
+    <elements>
+
+        <element type="combo">
+            <name>prohibitDocTypeIds</name>
+            <label>Don't allow part documents</label>
+            <label lang="de">Keine Teildokumente zulassen</label>
+            <value>1</value>
+            <store>Shopware.apps.Base.store.DocType</store>
+            <options>
+                <multiSelect>true</multiSelect>
+            </options>
+        </element>
+
+        <element type="button">
+            <name>startMbdusTeildokumenteMigration</name>
+            <label>Migrate data from "mbdus Teildokumente erstellen" plugin</label>
+            <label lang="de">Übernehme Daten aus "mbdus Teildokumente erstellen" Plugin</label>
+            <options>
+                <handler>
+                    <![CDATA[
+                    function(button) {
+                        Ext.Ajax.request({
+                            url: 'BucoPartDocumentsMigration/getMbdusMigrationInfo',
+                            success: function(response, opts) {
+                                var data = Ext.decode(response.responseText),
+                                    summaryString = 'Plugin found: '+data.pluginFound
+                                        + '<br>Plugin installed: '+data.pluginInstalled
+                                        + '<br>Plugin activated: '+data.pluginActivated
+                                        + '<br>Plugin\'s data table found: '+data.dataTableFound
+                                        + '<br>Plugin\'s data records: '+(data.dataTableFound ? data.dataTableRecords : 'n/a')
+                                        + '<br>Already migrated data records: '+(data.dataTableFound ? data.migratedRows : 'n/a');
+
+                                if(data.dataTableFound && data.dataTableRecords > 0) {
+                                    Ext.Msg.show({
+                                        title: 'Confirm',
+                                        icon: Ext.Msg.QUESTION,
+                                        buttons: Ext.Msg.YESNO,
+                                        msg: 'Do you want to start the migration? Previously migrated data records will be ignored and not be updated!<br><br>'+summaryString,
+                                        fn: function(btn) {
+                                            if (btn === 'yes') {
+                                                Ext.Ajax.request({
+                                                    url: 'BucoPartDocumentsMigration/doMdbusMigration',
+                                                    method: 'POST',
+                                                    success: function(response, opts) {
+                                                        var data = Ext.decode(response.responseText);
+
+                                                        if(data.success) {
+                                                            var summaryString = 'Migrated rows: '+data.insertedRows
+                                                                + '<br>Previously migrated data records: '+data.migratedRows
+                                                                + '<br>Source rows: '+data.dataTableRecords;
+
+                                                            Ext.Msg.show({
+                                                                title: 'Success',
+                                                                icon: Ext.Msg.INFO,
+                                                                buttons: Ext.Msg.YESNO,
+                                                                msg: 'Migration finished!<br><br>' + summaryString + '<br><br>Do you want to uninstall and remove the Mbdus plugin and it\'s data?',
+                                                                fn: function(btn) {
+                                                                    if (btn === 'yes') {
+                                                                        Ext.Ajax.request({
+                                                                            url: 'BucoPartDocumentsMigration/removeMbdusPluginAndData',
+                                                                            method: 'POST',
+                                                                            success: function(response, opts) {
+                                                                                var data = Ext.decode(response.responseText);
+
+                                                                                if(data.success) {
+                                                                                    Ext.Msg.show({
+                                                                                        title: 'Success',
+                                                                                        icon: Ext.Msg.INFO,
+                                                                                        buttons: Ext.Msg.OK,
+                                                                                        msg: 'Mbdus plugin and data have been removed. Please flush your caches.',
+                                                                                    });
+                                                                                }
+                                                                                else {
+                                                                                    Ext.Msg.show({
+                                                                                        title: 'Error',
+                                                                                        icon: Ext.Msg.ERROR,
+                                                                                        buttons: Ext.Msg.OK,
+                                                                                        msg: data.message,
+                                                                                    });
+                                                                                }
+                                                                            },
+                                                                            failure: function(response, opts) {
+                                                                                Ext.Msg.show({
+                                                                                    title: 'Error',
+                                                                                    icon: Ext.Msg.ERROR,
+                                                                                    buttons: Ext.Msg.OK,
+                                                                                    msg: 'Unknown error ('+response.status+' '+response.statusText+'):<br>'+response.responseText,
+                                                                                });
+                                                                            }
+                                                                        });
+                                                                    }
+                                                                }
+                                                            });
+                                                        }
+                                                        else {
+                                                            Ext.Msg.show({
+                                                                title: 'Error',
+                                                                icon: Ext.Msg.ERROR,
+                                                                buttons: Ext.Msg.OK,
+                                                                msg: data.message,
+                                                            });
+                                                        }
+                                                    },
+                                                    failure: function(response, opts) {
+                                                        Ext.Msg.show({
+                                                            title: 'Error',
+                                                            icon: Ext.Msg.ERROR,
+                                                            buttons: Ext.Msg.OK,
+                                                            msg: 'Unknown error ('+response.status+' '+response.statusText+'):<br>'+response.responseText,
+                                                        });
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    });
+                                }
+                                else {
+                                    Ext.Msg.show({
+                                        title: 'Info',
+                                        icon: Ext.Msg.INFO,
+                                        buttons: Ext.Msg.OK,
+                                        msg: 'Couldn\'t find any data to migrate:<br><br>'+summaryString,
+                                    });
+                                }
+                            },
+                            failure: function(response, opts) {
+                                if(response.status === 404) {
+                                    Ext.Msg.show({
+                                        title: 'Error',
+                                        icon: Ext.Msg.ERROR,
+                                        buttons: Ext.Msg.OK,
+                                        msg: 'Couldn\'t start the migration. This plugin needs to be activated first. It seems that this isn\'t the case.',
+                                    });
+                                }
+                                else {
+                                    Ext.Msg.show({
+                                        title: 'Error',
+                                        icon: Ext.Msg.ERROR,
+                                        buttons: Ext.Msg.OK,
+                                        msg: 'Unknown error ('+response.status+' '+response.statusText+'):<br>'+response.responseText,
+                                    });
+                                }
+                            }
+                        });
+                    }
+                    ]]>
+                </handler>
+            </options>
+        </element>
+
+    </elements>
+</config>

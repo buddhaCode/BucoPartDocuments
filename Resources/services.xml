@@ -1,0 +1,35 @@
+<?xml version="1.0" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <services>
+        <!-- Subscriber -->
+        <service id="buco_part_documents.subscriber.template" class="BucoPartDocuments\Subscriber\Template">
+            <tag name="shopware.event_subscriber" />
+            <argument>%buco_part_documents.plugin_dir%</argument>
+            <argument>%buco_part_documents.plugin_name%</argument>
+            <argument type="service" id="shopware.plugin.cached_config_reader"/>
+        </service>
+
+        <service class="BucoPartDocuments\Subscriber\Document" id="buco_part_documents.subscriber.document">
+            <tag name="shopware.event_subscriber"/>
+            <argument type="service" id="front"/>
+            <argument type="service" id="models"/>
+            <argument type="service" id="buco_part_documents.services.config"/>
+            <argument type="service" id="snippets"/>
+        </service>
+
+        <service class="BucoPartDocuments\Subscriber\OrderBatchProcess" id="buco_part_documents.subscriber.order_batch_process">
+            <tag name="shopware.event_subscriber"/>
+        </service>
+
+        <!-- Services -->
+        <service class="BucoPartDocuments\Services\Config" id="buco_part_documents.services.config">
+            <argument id="shopware.plugin.cached_config_reader" type="service"/>
+            <argument>%buco_part_documents.plugin_name%</argument>
+        </service>
+
+    </services>
+</container>
